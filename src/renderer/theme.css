@@ -1,0 +1,34 @@
+/* Theme definitions */
+body.theme-light {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --editor-bg: #fafafa;
+  --preview-bg: #ffffff;
+}
+
+body.theme-dark {
+  --bg-color:#1e1e1e;
+  --text-color:#d4d4d4;
+  --editor-bg:#252526;
+  --preview-bg:#1e1e1e;
+}
+
+/* Apply variables */
+html, body, #root {
+  height: 100%;
+  margin:0;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* Monaco editor container inherits background */
+.monaco-editor .inputarea {
+  background: var(--editor-bg) !important;
+}
+
+/* Preview area style */
+.preview {
+  background: var(--preview-bg);
+  color: var(--text-color);
+  padding: 12px;
+}

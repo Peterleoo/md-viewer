@@ -1,0 +1,41 @@
+{
+  "name": "md-viewer-editor",
+  "version": "0.1.0",
+  "description": "Cross-platform (Windows) Markdown viewer & editor with tab support",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "concurrently \"npm run dev:main\" \"npm run dev:renderer\"",
+    "dev:main": "nodemon --watch src/main --exec electron .",
+    "dev:renderer": "vite",
+    "clean": "powershell -NoProfile -Command \"Remove-Item -LiteralPath dist -Recurse -Force -ErrorAction SilentlyContinue\"",
+    "prebuild": "npm run clean",
+    "build": "vite build && electron-builder",
+    "package": "electron-builder"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "highlight.js": "^11.9.0",
+    "markdown-it": "^13.0.2",
+    "monaco-editor": "^0.49.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-tabs": "*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "concurrently": "^8.2.2",
+    "electron-builder": "^24.13.0",
+    "nodemon": "^3.1.0",
+    "electron": "^31.7.7",
+    "vite": "^5.2.0"
+  },
+  "build": {
+    "productName": "MDViewerEditor",
+    "appId": "com.example.mdviewer",
+    "win": {
+      "target": "portable"
+    }
+  }
+}
