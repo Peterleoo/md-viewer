@@ -21,6 +21,16 @@ async function writeConfig(cfg) {
 
 let mainWindow;
 
+function loadDevServer(win, devUrl, retries = 30) {
+  win.loadURL(devUrl).catch((error) => {
+    if (retries <= 0) {
+      console.error(`Failed to load dev server at ${devUrl}`, error);
+      return;
+    }
+    setTimeout(() => loadDevServer(win, devUrl, retries - 1), 500);
+  });
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -36,7 +46,7 @@ function createWindow() {
   if (!app.isPackaged) {
     const devPort = process.env.VITE_PORT || '5173';
     const devUrl = `http://localhost:${devPort}`;
-    mainWindow.loadURL(devUrl);
+    loadDevServer(mainWindow, devUrl);
   } else {
     const indexPath = path.join(__dirname, '..', '..', 'dist', 'renderer', 'index.html');
     mainWindow.loadFile(indexPath);
@@ -114,6 +124,7 @@ ipcMain.handle('config:setLang', async (_, lang) => {
   const cfg = await readConfig();
   cfg.lang = lang;
   await writeConfig(cfg);
+  createAppMenu(lang);
   return { ok: true };
 });
 
@@ -152,32 +163,41 @@ const menuLabels = {
     quit: 'Quit'
   }
 };
-const mt = menuLabels[menuLang] || menuLabels['zh'];
-
-const template = [
-  {
-    label: mt.file,
-    submenu: [
-      { label: mt.newFile, accelerator: 'CmdOrCtrl+N', click: () => { mainWindow.webContents.send('menu-new-file'); } },
-      { label: mt.open, accelerator: 'CmdOrCtrl+O', click: () => { mainWindow.webContents.send('menu-open'); } },
-      { label: mt.save, accelerator: 'CmdOrCtrl+S', click: () => { mainWindow.webContents.send('menu-save'); } },
-      { label: mt.exportPdf, accelerator: 'CmdOrCtrl+Shift+P', click: () => { mainWindow.webContents.send('menu-export-pdf'); } },
-      { label: mt.exportHtml, accelerator: 'CmdOrCtrl+Shift+H', click: () => { mainWindow.webContents.send('menu-export-html'); } },
-      { label: mt.toggleLang, accelerator: 'CmdOrCtrl+L', click: () => { mainWindow.webContents.send('menu-toggle-lang'); } },
-      { type: 'separator' },
-      isMac ? { role: 'close' } : { role: 'quit', label: mt.quit }
-    ]
-  },
-  {
-    label: mt.view,
-    submenu: [
-      { role: 'reload' },
-      { role: 'forcereload' },
-      { role: 'toggledevtools' },
-      { type: 'separator' },
-      { role: 'togglefullscreen' }
-    ]
+function sendMenuAction(channel) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(channel);
   }
-];
-const menu = Menu.buildFromTemplate(template);
-Menu.setApplicationMenu(menu);
+}
+
+function createAppMenu(lang = menuLang) {
+  menuLang = lang;
+  const mt = menuLabels[menuLang] || menuLabels['zh'];
+  const template = [
+    {
+      label: mt.file,
+      submenu: [
+        { label: mt.newFile, accelerator: 'CmdOrCtrl+N', click: () => sendMenuAction('menu-new-file') },
+        { label: mt.open, accelerator: 'CmdOrCtrl+O', click: () => sendMenuAction('menu-open') },
+        { label: mt.save, accelerator: 'CmdOrCtrl+S', click: () => sendMenuAction('menu-save') },
+        { label: mt.exportPdf, accelerator: 'CmdOrCtrl+Shift+P', click: () => sendMenuAction('menu-export-pdf') },
+        { label: mt.exportHtml, accelerator: 'CmdOrCtrl+Shift+H', click: () => sendMenuAction('menu-export-html') },
+        { label: mt.toggleLang, accelerator: 'CmdOrCtrl+L', click: () => sendMenuAction('menu-toggle-lang') },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit', label: mt.quit }
+      ]
+    },
+    {
+      label: mt.view,
+      submenu: [
+        { role: 'reload' },
+        { role: 'forcereload' },
+        { role: 'toggledevtools' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    }
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+createAppMenu(menuLang);

@@ -6,8 +6,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   exportPDF: (html) => ipcRenderer.invoke('export:pdf', html),
   saveHTML: (html) => ipcRenderer.invoke('dialog:saveHTML', html),
   on: (channel, cb) => {
-    ipcRenderer.on(channel, (e, ...args) => cb(...args));
-    return () => ipcRenderer.removeAllListeners(channel);
+    const listener = (e, ...args) => cb(...args);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
   },
   getLang: () => ipcRenderer.invoke('config:getLang'),
   setLang: (lang) => ipcRenderer.invoke('config:setLang', lang),
